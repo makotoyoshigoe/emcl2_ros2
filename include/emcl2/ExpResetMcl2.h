@@ -32,12 +32,13 @@ class ExpResetMcl2 : public Mcl
 	~ExpResetMcl2();
 
 	void sensorUpdate(double lidar_x, double lidar_y, double lidar_t, bool inv);
+	void resetUseWallTracking(Scan & scan);
+	bool tooFar();
+	double euclideanDistanceFromLastResetPos();
 	void gnssResetWithLLCalc(Scan & scan);
 	void expResetWithLLCalc(Scan & scan);
-	void gr_er(Scan & scan);
+	void gnssResetAndExpReset(Scan & scan);
 	void sendWTGoal();
-	double euclideanDistanceFromLastResetPos();
-	bool tooFar();
 
       private:
 	double alpha_threshold_;
@@ -50,11 +51,11 @@ class ExpResetMcl2 : public Mcl
 	bool gnss_reset_;
     bool wall_tracking_flg_;
     bool wall_tracking_start_;
-	bool wall_tracking_cancel_;
 	double gnss_reset_var_;
 	double kld_th_, pf_var_th_;
 	bool should_gnss_reset_;
 	bool open_place_arrived_, pre_open_place_arrived_;
+	double last_reset_gnss_pos_[2] = {INFINITY, INFINITY};
 	rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client_;
 	rclcpp_action::Client<WallTrackingAction>::SendGoalOptions send_goal_options_;
 

@@ -78,10 +78,6 @@ void EMcl2Node::initCommunication(void)
     gnss_pose_with_covariance_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     	"gnss_pose_with_covariance", 2, std::bind(&EMcl2Node::cbGnssPoseWithCovariance, this, std::placeholders::_1));	
     client_ptr_ = rclcpp_action::create_client<WallTrackingAction>(this, "wall_tracking");
-    send_wall_tracking_act_ = false;
-	open_place_arrived_sub_ = create_subscription<std_msgs::msg::Bool>(
-		"open_place_arrived", 2, std::bind(&EMcl2Node::cbOpenPlaceArrived, this, std::placeholders::_1)
-	);
 }
 
 void EMcl2Node::initTF(void)
@@ -215,10 +211,6 @@ void EMcl2Node::cbGnssPoseWithCovariance(const geometry_msgs::msg::PoseWithCovar
 	if(init_pf_) pf_->setOdomGnss(msg);
 }
 
-void EMcl2Node::cbOpenPlaceArrived(const std_msgs::msg::Bool::ConstSharedPtr msg)
-{
-}
-
 void EMcl2Node::initialPoseReceived(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
@@ -276,9 +268,6 @@ void EMcl2Node::loop(void)
 		}
 
 		pf_->sensorUpdate(lx, ly, lt, inv);
-
-        // if (pf_->getWallTrackingStartSgn() && !send_wall_tracking_act_) sendGoal();
-		// if (pf_->getWallTrackingCancelSgn() && pf_->getWallTrackingStartSgn()) cancelWallTracking();
 
 		double x_var, y_var, t_var, xy_cov, yt_cov, tx_cov;
 		pf_->meanPose(x, y, t, x_var, y_var, t_var, xy_cov, yt_cov, tx_cov);
@@ -435,88 +424,6 @@ bool EMcl2Node::cbSimpleReset(
   const std_srvs::srv::Empty::Request::ConstSharedPtr, std_srvs::srv::Empty::Response::SharedPtr)
 {
 	return simple_reset_request_ = true;
-}
-
-void EMcl2Node::cancelWallTracking()
-{
-	RCLCPP_INFO(this->get_logger(), "send cancel goal");
-	client_ptr_->async_cancel_all_goals();
-	send_wall_tracking_act_ = false;
-}
-
-void EMcl2Node::sendGoal()
-{
-    if(!client_ptr_->wait_for_action_server()){
-        RCLCPP_ERROR(this->get_logger(), "Action server not available after waiting");
-        rclcpp::shutdown();
-    }
-
-    feedback_cnt_ = 0;
-
-    auto goal_msg = WallTrackingAction::Goal();
-    goal_msg.start = true;
-    RCLCPP_INFO(this->get_logger(), "Sending goal");
-    auto send_goal_options = rclcpp_action::Client<WallTrackingAction>::SendGoalOptions();
-    using namespace std::placeholders;
-    send_goal_options.goal_response_callback = std::bind(
-        &EMcl2Node::goalResponseCallback, this, _1
-    );
-    send_goal_options.result_callback = std::bind(
-        &EMcl2Node::resultCallback, this, _1
-    );
-    send_goal_options.feedback_callback = std::bind(
-        &EMcl2Node::feedbackCallback, this, _1, _2
-    );
-    this->client_ptr_->async_send_goal(goal_msg, send_goal_options);
-    send_wall_tracking_act_ = true;
-    // client_ptr_->async_cancel_all_goals();
-}
-
-void EMcl2Node::goalResponseCallback(
-    const GoalHandleWallTracking::SharedPtr & goal_handle
-)
-{
-    if (!goal_handle) {
-        RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
-    } else {
-        RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
-    }
-}
-
-void EMcl2Node::feedbackCallback(
-        [[maybe_unused]] typename GoalHandleWallTracking::SharedPtr, 
-        [[maybe_unused]] const std::shared_ptr<const typename WallTrackingAction::Feedback> feedback)
-{
-    // RCLCPP_INFO(this->get_logger(), "wall tracking sign: %d", pf_->getWallTrackingCancelSgn());
-    // if(pf_->getWallTrackingCancelSgn() && pf_->getWallTrackingStartSgn()){
-	// 	RCLCPP_INFO(this->get_logger(), "send cancel goal");
-    //    	client_ptr_->async_cancel_all_goals();
-    //    	send_wall_tracking_act_ = false;
-	//    	pf_->setWallTrackingStartSgn(false);
-	//    	pf_->setWallTrackingCancelSgn(false);
-    // }
-}
-
-void EMcl2Node::resultCallback(
-    const GoalHandleWallTracking::WrappedResult & result
-)
-{
-    switch (result.code) {
-      case rclcpp_action::ResultCode::SUCCEEDED:
-        break;
-      case rclcpp_action::ResultCode::ABORTED:
-        RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
-        return;
-      case rclcpp_action::ResultCode::CANCELED:
-        RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
-        return;
-      default:
-        RCLCPP_ERROR(this->get_logger(), "Unknown result code");
-        return;
-    }
-    send_wall_tracking_act_ = false;
-    RCLCPP_INFO(this->get_logger(), "Result Feedback Count: %d", feedback_cnt_);
-    RCLCPP_INFO(this->get_logger(), "Result Receibed");
 }
 
 }  // namespace emcl2
