@@ -160,7 +160,8 @@ void EMcl2Node::initPF(void)
 	pf_.reset(new ExpResetMcl2(
 	  init_pose, num_particles, scan, om, map, alpha_th, ex_rad_pos, ex_rad_ori,
 	  extraction_rate, range_threshold, sensor_reset, 
-	  odom_gnss_, gnss_reset, wall_tracking_flg, gnss_reset_var, kld_th, pf_var_th));
+	  odom_gnss_, gnss_reset, wall_tracking_flg, gnss_reset_var, kld_th, pf_var_th, 
+	  client_ptr_));
 
 	init_pf_ = true;
 }
@@ -216,7 +217,6 @@ void EMcl2Node::cbGnssPoseWithCovariance(const geometry_msgs::msg::PoseWithCovar
 
 void EMcl2Node::cbOpenPlaceArrived(const std_msgs::msg::Bool::ConstSharedPtr msg)
 {
-	if(init_pf_) pf_->setOpenPlaceArrived(msg->data);
 }
 
 void EMcl2Node::initialPoseReceived(
@@ -277,8 +277,8 @@ void EMcl2Node::loop(void)
 
 		pf_->sensorUpdate(lx, ly, lt, inv);
 
-        if (pf_->getWallTrackingStartSgn() && !send_wall_tracking_act_) sendGoal();
-		if (pf_->getWallTrackingCancelSgn() && pf_->getWallTrackingStartSgn()) cancelWallTracking();
+        // if (pf_->getWallTrackingStartSgn() && !send_wall_tracking_act_) sendGoal();
+		// if (pf_->getWallTrackingCancelSgn() && pf_->getWallTrackingStartSgn()) cancelWallTracking();
 
 		double x_var, y_var, t_var, xy_cov, yt_cov, tx_cov;
 		pf_->meanPose(x, y, t, x_var, y_var, t_var, xy_cov, yt_cov, tx_cov);
@@ -442,8 +442,6 @@ void EMcl2Node::cancelWallTracking()
 	RCLCPP_INFO(this->get_logger(), "send cancel goal");
 	client_ptr_->async_cancel_all_goals();
 	send_wall_tracking_act_ = false;
-	pf_->setWallTrackingStartSgn(false);
-	pf_->setWallTrackingCancelSgn(false);
 }
 
 void EMcl2Node::sendGoal()
@@ -516,8 +514,6 @@ void EMcl2Node::resultCallback(
         RCLCPP_ERROR(this->get_logger(), "Unknown result code");
         return;
     }
-    pf_->setWallTrackingStartSgn(false);
-	pf_->setShouldGnssReset(true);
     send_wall_tracking_act_ = false;
     RCLCPP_INFO(this->get_logger(), "Result Feedback Count: %d", feedback_cnt_);
     RCLCPP_INFO(this->get_logger(), "Result Receibed");

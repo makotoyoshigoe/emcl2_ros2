@@ -36,9 +36,6 @@
 #include <wall_tracking_msgs/action/wall_tracking.hpp>
 #include <std_msgs/msg/bool.hpp>
 
-using WallTrackingAction = wall_tracking_msgs::action::WallTracking;
-using GoalHandleWallTracking = rclcpp_action::ClientGoalHandle<WallTrackingAction>;
-
 namespace emcl2
 {
 

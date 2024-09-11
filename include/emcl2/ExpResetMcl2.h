@@ -8,6 +8,14 @@
 #include "emcl2/GnssReset.h"
 
 #include <memory>
+
+#include <rclcpp_action/rclcpp_action.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
+#include <wall_tracking_msgs/action/wall_tracking.hpp>
+
+using WallTrackingAction = wall_tracking_msgs::action::WallTracking;
+using GoalHandleWallTracking = rclcpp_action::ClientGoalHandle<WallTrackingAction>;
+
 namespace emcl2
 {
 class ExpResetMcl2 : public Mcl
@@ -19,17 +27,17 @@ class ExpResetMcl2 : public Mcl
 	  double expansion_radius_position, double expansion_radius_orientation,
 	  double extraction_rate, double successive_penetration_threshold, bool sensor_reset, 
       const GnssReset & odom_gnss, bool gnss_reset, bool wall_tracking_flg, double gnss_reset_var, 
-	  double kld_th, double pf_var_th);
+	  double kld_th, double pf_var_th, 
+	  rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client);
 	~ExpResetMcl2();
 
 	void sensorUpdate(double lidar_x, double lidar_y, double lidar_t, bool inv);
-    bool getWallTrackingStartSgn();
-    void setWallTrackingStartSgn(bool sgn);
-	bool getShouldGnssReset();
-	void setShouldGnssReset(bool sgn);
-	void setOpenPlaceArrived(bool sgn);
-	bool getWallTrackingCancelSgn();
-	void setWallTrackingCancelSgn(bool sgn);
+	void gnssResetWithLLCalc(Scan & scan);
+	void expResetWithLLCalc(Scan & scan);
+	void gr_er(Scan & scan);
+	void sendWTGoal();
+	double euclideanDistanceFromLastResetPos();
+	bool tooFar();
 
       private:
 	double alpha_threshold_;
@@ -47,9 +55,19 @@ class ExpResetMcl2 : public Mcl
 	double kld_th_, pf_var_th_;
 	bool should_gnss_reset_;
 	bool open_place_arrived_, pre_open_place_arrived_;
+	rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client_;
+	rclcpp_action::Client<WallTrackingAction>::SendGoalOptions send_goal_options_;
+
+	void goalResponseCallback(const GoalHandleWallTracking::SharedPtr & goal_handle);
+    void feedbackCallback(
+        [[maybe_unused]] typename GoalHandleWallTracking::SharedPtr, 
+        [[maybe_unused]] const std::shared_ptr<const typename WallTrackingAction::Feedback> feedback);
+    void resultCallback(const GoalHandleWallTracking::WrappedResult & result);
 
 	void expansionReset(void);
 	double nonPenetrationRate(int skip, LikelihoodFieldMap * map, Scan & scan);
+
+	
 };
 
 }  // namespace emcl2
