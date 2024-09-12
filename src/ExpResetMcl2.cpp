@@ -19,7 +19,8 @@ ExpResetMcl2::ExpResetMcl2(
   double range_threshold, bool sensor_reset, 
   const GnssReset & odom_gnss, bool gnss_reset, bool wall_tracking_flg, double gnss_reset_var, 
   double kld_th, double pf_var_th, 
-  rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client)
+  rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client, 
+  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub)
 : Mcl::Mcl(p, num, scan, odom_model, map, odom_gnss),
   alpha_threshold_(alpha_th),
   expansion_radius_position_(expansion_radius_position),
@@ -32,7 +33,8 @@ ExpResetMcl2::ExpResetMcl2(
   gnss_reset_var_(gnss_reset_var), 
   kld_th_(kld_th), 
   pf_var_th_(pf_var_th), 
-  wt_client_(wt_client)
+  wt_client_(wt_client), 
+  last_reset_gnss_pos_pub_(last_reset_gnss_pos_pub)
 {
 	// RCLCPP_INFO(rclcpp::get_logger("emcl2_node"), 
 	// "gnss_reset: %d, wall_tracking_flg: %d, sqrt(gnss_reset_var): %lf, kld_th: %lf, pf_var_th: %lf", 
@@ -42,6 +44,8 @@ ExpResetMcl2::ExpResetMcl2(
 	send_goal_options_.goal_response_callback = std::bind(&ExpResetMcl2::goalResponseCallback, this, std::placeholders::_1);
 	send_goal_options_.feedback_callback = std::bind(&ExpResetMcl2::feedbackCallback, this, std::placeholders::_1, std::placeholders::_2);
 	send_goal_options_.result_callback = std::bind(&ExpResetMcl2::resultCallback, this, std::placeholders::_1);
+	last_reset_gnss_pos_.point.x = INFINITY;
+	last_reset_gnss_pos_.point.y = INFINITY;
 }
 
 ExpResetMcl2::~ExpResetMcl2() {}
@@ -61,12 +65,17 @@ void ExpResetMcl2::feedbackCallback(
 	pre_open_place_arrived_ = open_place_arrived_;
 	open_place_arrived_ = feedback->open_place_arrived;
 	if(!pre_open_place_arrived_ && open_place_arrived_) should_gnss_reset_ = true;
-	if(alpha_ >= alpha_threshold_ && open_place_arrived_){
+	if(alpha_ >= alpha_threshold_ && open_place_arrived_ && exec_reset_aft_wt_){
 		RCLCPP_INFO(rclcpp::get_logger("emcl2"), "Send cancel goal to server");
 		wt_client_->async_cancel_all_goals();
-		last_reset_gnss_pos_[0] = odom_gnss_.gnss_position_[0];
-		last_reset_gnss_pos_[1] = odom_gnss_.gnss_position_[1];
+		last_reset_gnss_pos_.point.x = odom_gnss_.gnss_position_[0];
+		last_reset_gnss_pos_.point.y = odom_gnss_.gnss_position_[1];
+		last_reset_gnss_pos_.header.frame_id = "map";
+		rclcpp::Clock clock;
+		last_reset_gnss_pos_.header.stamp = clock.now();
 		wall_tracking_start_ = false;
+		last_reset_gnss_pos_pub_->publish(last_reset_gnss_pos_);
+		exec_reset_aft_wt_ = false;
 	}
 }
 void ExpResetMcl2::resultCallback(const GoalHandleWallTracking::WrappedResult & result)
@@ -163,8 +172,8 @@ bool ExpResetMcl2::tooFar()
 
 double ExpResetMcl2::euclideanDistanceFromLastResetPos()
 {
-	double dx = last_reset_gnss_pos_[0] - odom_gnss_.gnss_position_[0];
-	double dy = last_reset_gnss_pos_[1] - odom_gnss_.gnss_position_[1];
+	double dx = last_reset_gnss_pos_.point.x - odom_gnss_.gnss_position_[0];
+	double dy = last_reset_gnss_pos_.point.y - odom_gnss_.gnss_position_[1];
 	return hypot(dx, dy);
 }
 
@@ -173,9 +182,13 @@ void ExpResetMcl2::resetUseWallTracking(Scan & scan)
 	if(!wall_tracking_start_) sendWTGoal();
 	if(should_gnss_reset_){
 		// RCLCPP_INFO(rclcpp::get_logger("emcl2"), "Should GNSS Reset");
+		exec_reset_aft_wt_ = true;
 		gnssResetWithLLCalc(scan);
 		should_gnss_reset_ = false;
-	} else if(open_place_arrived_) gnssResetAndExpReset(scan);
+	} else if(open_place_arrived_){
+		gnssResetAndExpReset(scan);
+		exec_reset_aft_wt_ = true;	
+	}
 }
 
 void ExpResetMcl2::sendWTGoal()

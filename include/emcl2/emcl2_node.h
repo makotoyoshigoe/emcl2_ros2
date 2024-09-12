@@ -31,9 +31,6 @@
 #include <memory>
 #include <string>
 
-#include <rclcpp_action/rclcpp_action.hpp>
-#include <rclcpp_components/register_node_macro.hpp>
-#include <wall_tracking_msgs/action/wall_tracking.hpp>
 #include <std_msgs/msg/bool.hpp>
 
 namespace emcl2
@@ -115,7 +112,6 @@ class EMcl2Node : public rclcpp::Node
 	void initialPoseReceived(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr
 				   msg);  // same name is found in amcl
 
-    rclcpp_action::Client<WallTrackingAction>::SharedPtr client_ptr_;
 };
 
 }  // namespace emcl2

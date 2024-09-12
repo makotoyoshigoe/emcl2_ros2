@@ -10,8 +10,8 @@
 #include <memory>
 
 #include <rclcpp_action/rclcpp_action.hpp>
-#include <rclcpp_components/register_node_macro.hpp>
 #include <wall_tracking_msgs/action/wall_tracking.hpp>
+#include <geometry_msgs/msg/point_stamped.hpp>
 
 using WallTrackingAction = wall_tracking_msgs::action::WallTracking;
 using GoalHandleWallTracking = rclcpp_action::ClientGoalHandle<WallTrackingAction>;
@@ -28,7 +28,8 @@ class ExpResetMcl2 : public Mcl
 	  double extraction_rate, double successive_penetration_threshold, bool sensor_reset, 
       const GnssReset & odom_gnss, bool gnss_reset, bool wall_tracking_flg, double gnss_reset_var, 
 	  double kld_th, double pf_var_th, 
-	  rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client);
+	  rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client, 
+	  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub);
 	~ExpResetMcl2();
 
 	void sensorUpdate(double lidar_x, double lidar_y, double lidar_t, bool inv);
@@ -55,9 +56,12 @@ class ExpResetMcl2 : public Mcl
 	double kld_th_, pf_var_th_;
 	bool should_gnss_reset_;
 	bool open_place_arrived_, pre_open_place_arrived_;
-	double last_reset_gnss_pos_[2] = {INFINITY, INFINITY};
+	bool exec_reset_aft_wt_;
+	// double last_reset_gnss_pos_[2] = {INFINITY, INFINITY};
 	rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client_;
 	rclcpp_action::Client<WallTrackingAction>::SendGoalOptions send_goal_options_;
+	geometry_msgs::msg::PointStamped last_reset_gnss_pos_;
+	rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub_;
 
 	void goalResponseCallback(const GoalHandleWallTracking::SharedPtr & goal_handle);
     void feedbackCallback(
@@ -68,7 +72,6 @@ class ExpResetMcl2 : public Mcl
 	void expansionReset(void);
 	double nonPenetrationRate(int skip, LikelihoodFieldMap * map, Scan & scan);
 
-	
 };
 
 }  // namespace emcl2
