@@ -61,7 +61,7 @@ void GnssReset::gnssReset(double alpha, double alpha_th, std::vector<emcl2::Part
 {
     double beta = alpha < alpha_th ? 1 - alpha / alpha_th : 0.0;
     int particle_num = beta * particles.size();
-    RCLCPP_INFO(rclcpp::get_logger("emcl2_node"), "beta: %lf, num of replace particle: %d", beta, particle_num);
+    // RCLCPP_INFO(rclcpp::get_logger("emcl2_node"), "beta: %lf, num of replace particle: %d", beta, particle_num);
     // RCLCPP_INFO(rclcpp::get_logger("emcl2_node"), "(odom_gnss.x, odom_gnss.y) = (%lf, %lf)", odom_gnss_.odom_gnss_x_, odom_gnss_.odom_gnss_y_);
     for(int i=0; i<particle_num; ++i)
     {

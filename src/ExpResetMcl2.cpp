@@ -229,9 +229,9 @@ void ExpResetMcl2::gnssResetWithLLCalc(Scan & scan)
 void ExpResetMcl2::gnssResetAndExpReset(Scan & scan)
 {
 	double kld = odom_gnss_.kld();
-	RCLCPP_INFO(rclcpp::get_logger("emcl2_node"), 
-				"kld / kld_th: %lf / %lf, (x_var, y_var) / var_th: (%lf, %lf) / %lf", 
-				kld, kld_th_, odom_gnss_.pf_x_var_, odom_gnss_.pf_y_var_, pf_var_th_);
+	// RCLCPP_INFO(rclcpp::get_logger("emcl2_node"), 
+	// 			"kld / kld_th: %lf / %lf, (x_var, y_var) / var_th: (%lf, %lf) / %lf", 
+	// 			kld, kld_th_, odom_gnss_.pf_x_var_, odom_gnss_.pf_y_var_, pf_var_th_);
 	bool kld_cond = kld < kld_th_;
 	bool var_cond = odom_gnss_.pf_x_var_ < pf_var_th_ && odom_gnss_.pf_y_var_ < pf_var_th_;
 	bool er_cond = kld_cond || var_cond;
