@@ -17,7 +17,7 @@ ExpResetMcl2::ExpResetMcl2(
   const std::shared_ptr<LikelihoodFieldMap> & map, double alpha_th,
   double expansion_radius_position, double expansion_radius_orientation, double extraction_rate,
   double range_threshold, bool sensor_reset, 
-  const GnssReset & odom_gnss, bool gnss_reset, bool wall_tracking_flg, double gnss_reset_var, 
+  const GnssReset & odom_gnss, bool use_gnss_reset, bool use_wall_tracking, double gnss_reset_var, 
   double kld_th, double pf_var_th, 
   rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client, 
   rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub)
@@ -28,8 +28,8 @@ ExpResetMcl2::ExpResetMcl2(
   extraction_rate_(extraction_rate),
   range_threshold_(range_threshold),
   sensor_reset_(sensor_reset), 
-  gnss_reset_(gnss_reset), 
-  wall_tracking_flg_(wall_tracking_flg),
+  use_gnss_reset_(use_gnss_reset), 
+  use_wall_tracking_(use_wall_tracking),
   gnss_reset_var_(gnss_reset_var), 
   kld_th_(kld_th), 
   pf_var_th_(pf_var_th), 
@@ -37,8 +37,8 @@ ExpResetMcl2::ExpResetMcl2(
   last_reset_gnss_pos_pub_(last_reset_gnss_pos_pub)
 {
 	// RCLCPP_INFO(rclcpp::get_logger("emcl2_node"), 
-	// "gnss_reset: %d, wall_tracking_flg: %d, sqrt(gnss_reset_var): %lf, kld_th: %lf, pf_var_th: %lf", 
-	// gnss_reset_, wall_tracking_flg_, sqrt(gnss_reset_var_), kld_th_, pf_var_th_);
+	// "use_gnss_reset: %d, use_wall_tracking: %d, sqrt(gnss_reset_var): %lf, kld_th: %lf, pf_var_th: %lf", 
+	// use_gnss_reset, use_wall_tracking, sqrt(gnss_reset_var_), kld_th_, pf_var_th_);
 	wall_tracking_start_ = false;
 	send_goal_options_ = rclcpp_action::Client<WallTrackingAction>::SendGoalOptions();
 	send_goal_options_.goal_response_callback = std::bind(&ExpResetMcl2::goalResponseCallback, this, std::placeholders::_1);
@@ -128,9 +128,9 @@ void ExpResetMcl2::sensorUpdate(double lidar_x, double lidar_y, double lidar_t, 
 
 	if (alpha_ < alpha_threshold_) {
 		bool gnss_info_rel_is_low = tooFar() || odom_gnss_.isNAN();
-		if(wall_tracking_flg_ && gnss_info_rel_is_low){
+		if(use_wall_tracking_ && gnss_info_rel_is_low){
 			resetUseWallTracking(scan);
-		} else if(gnss_reset_){
+		} else if(use_gnss_reset_){
 			gnssResetAndExpReset(scan);
 		} else {
 			expResetWithLLCalc(scan);

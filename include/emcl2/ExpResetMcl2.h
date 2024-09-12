@@ -26,7 +26,7 @@ class ExpResetMcl2 : public Mcl
 	  const std::shared_ptr<LikelihoodFieldMap> & map, double alpha_th,
 	  double expansion_radius_position, double expansion_radius_orientation,
 	  double extraction_rate, double successive_penetration_threshold, bool sensor_reset, 
-      const GnssReset & odom_gnss, bool gnss_reset, bool wall_tracking_flg, double gnss_reset_var, 
+      const GnssReset & odom_gnss, bool use_gnss_reset, bool use_wall_tracking, double gnss_reset_var, 
 	  double kld_th, double pf_var_th, 
 	  rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client, 
 	  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub);
@@ -49,8 +49,8 @@ class ExpResetMcl2 : public Mcl
 	double extraction_rate_;
 	double range_threshold_;
 	bool sensor_reset_;
-	bool gnss_reset_;
-    bool wall_tracking_flg_;
+	bool use_gnss_reset_;
+    bool use_wall_tracking_;
     bool wall_tracking_start_;
 	double gnss_reset_var_;
 	double kld_th_, pf_var_th_;
