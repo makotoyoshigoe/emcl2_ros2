@@ -141,8 +141,8 @@ void EMcl2Node::initPF(void)
 	double kld_th, pf_var_th;
     this->declare_parameter("use_gnss_reset", false);
 	this->get_parameter("use_gnss_reset", use_gnss_reset);
-    this->declare_parameter("use_wall_tracking_flg", false);
-    this->get_parameter("use_wall_tracking_flg", use_wall_tracking);
+    this->declare_parameter("use_wall_tracking", false);
+    this->get_parameter("use_wall_tracking", use_wall_tracking);
 	this->declare_parameter("gnss_reset_var", 2.0);
     this->get_parameter("gnss_reset_var", gnss_reset_var);
 	this->declare_parameter("kld_th", 10.0);
