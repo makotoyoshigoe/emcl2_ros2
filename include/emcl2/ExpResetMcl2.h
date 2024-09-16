@@ -5,13 +5,14 @@
 #define EMCL2__EXPRESETMCL2_H_
 
 #include "emcl2/Mcl.h"
-#include "emcl2/GnssReset.h"
+#include "emcl2/GnssUtil.h"
 
 #include <memory>
 
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <wall_tracking_msgs/action/wall_tracking.hpp>
 #include <geometry_msgs/msg/point_stamped.hpp>
+
 
 using WallTrackingAction = wall_tracking_msgs::action::WallTracking;
 using GoalHandleWallTracking = rclcpp_action::ClientGoalHandle<WallTrackingAction>;
@@ -26,20 +27,16 @@ class ExpResetMcl2 : public Mcl
 	  const std::shared_ptr<LikelihoodFieldMap> & map, double alpha_th,
 	  double expansion_radius_position, double expansion_radius_orientation,
 	  double extraction_rate, double successive_penetration_threshold, bool sensor_reset, 
-      const GnssReset & odom_gnss, bool use_gnss_reset, bool use_wall_tracking, double gnss_reset_var, 
+      const GnssUtil & gnss_utility, bool use_gnss_reset, bool use_wall_tracking, double gnss_reset_var, 
 	  double kld_th, double pf_var_th, 
 	  rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client, 
 	  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub);
 	~ExpResetMcl2();
 
 	void sensorUpdate(double lidar_x, double lidar_y, double lidar_t, bool inv);
-	void resetUseWallTracking(Scan & scan);
-	bool tooFar();
-	double euclideanDistanceFromLastResetPos();
-	void gnssResetWithLLCalc(Scan & scan);
-	void expResetWithLLCalc(Scan & scan);
-	void gnssResetAndExpReset(Scan & scan);
-	void sendWTGoal();
+
+	void setGnssPose(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg);
+	void setPfPose(double x, double y, double x_var, double y_var);
 
       private:
 	double alpha_threshold_;
@@ -72,6 +69,15 @@ class ExpResetMcl2 : public Mcl
 	void expansionReset(void);
 	double nonPenetrationRate(int skip, LikelihoodFieldMap * map, Scan & scan);
 
+	void resetUseWallTracking(Scan & scan);
+	bool tooFar();
+	double euclideanDistanceFromLastResetPos();
+	void gnssResetWithLLCalc(Scan & scan);
+	void expResetWithLLCalc(Scan & scan);
+	void gnssResetAndExpReset(Scan & scan);
+	void sendWTGoal();
+
+	GnssUtil gnss_utility_;
 };
 
 }  // namespace emcl2

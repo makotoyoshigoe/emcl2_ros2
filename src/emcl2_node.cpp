@@ -158,7 +158,7 @@ void EMcl2Node::initPF(void)
 	pf_.reset(new ExpResetMcl2(
 	  init_pose, num_particles, scan, om, map, alpha_th, ex_rad_pos, ex_rad_ori, 
 	  extraction_rate, range_threshold, sensor_reset, 
-	  odom_gnss_, use_gnss_reset, use_wall_tracking, gnss_reset_var, kld_th, pf_var_th, 
+	  gnss_utility, use_gnss_reset, use_wall_tracking, gnss_reset_var, kld_th, pf_var_th, 
 	  client_ptr, 
 	  last_reset_gnss_pos_pub));
 
@@ -211,7 +211,7 @@ void EMcl2Node::cbScan(const sensor_msgs::msg::LaserScan::ConstSharedPtr msg)
 
 void EMcl2Node::cbGnssPoseWithCovariance(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
-	if(init_pf_) pf_->setOdomGnss(msg);
+	if(init_pf_) pf_->setGnssPose(msg);
 }
 
 void EMcl2Node::initialPoseReceived(
