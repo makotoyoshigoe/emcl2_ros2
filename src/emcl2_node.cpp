@@ -155,12 +155,17 @@ void EMcl2Node::initPF(void)
 	rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub;
 	last_reset_gnss_pos_pub = create_publisher<geometry_msgs::msg::PointStamped>("last_reset_gnss_pos", 2);
 
+	rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr reset_pose_aft_wt_pub_;
+	reset_pose_aft_wt_pub_ = create_publisher<geometry_msgs::msg::PoseArray>("reset_pose_aft_wt", 2);
+	
 	pf_.reset(new ExpResetMcl2(
 	  init_pose, num_particles, scan, om, map, alpha_th, ex_rad_pos, ex_rad_ori, 
 	  extraction_rate, range_threshold, sensor_reset, 
 	  gnss_utility, use_gnss_reset, use_wall_tracking, gnss_reset_var, kld_th, pf_var_th, 
 	  client_ptr, 
-	  last_reset_gnss_pos_pub));
+	  last_reset_gnss_pos_pub, 
+	  reset_pose_aft_wt_pub_
+	  ));
 
 	init_pf_ = true;
 }

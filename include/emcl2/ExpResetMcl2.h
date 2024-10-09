@@ -12,7 +12,7 @@
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <wall_tracking_msgs/action/wall_tracking.hpp>
 #include <geometry_msgs/msg/point_stamped.hpp>
-
+#include <geometry_msgs/msg/pose_array.hpp>
 
 using WallTrackingAction = wall_tracking_msgs::action::WallTracking;
 using GoalHandleWallTracking = rclcpp_action::ClientGoalHandle<WallTrackingAction>;
@@ -30,7 +30,8 @@ class ExpResetMcl2 : public Mcl
       const GnssUtil & gnss_utility, bool use_gnss_reset, bool use_wall_tracking, double gnss_reset_var, 
 	  double kld_th, double pf_var_th, 
 	  rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client, 
-	  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub);
+	  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub, 
+	  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr reset_pose_aft_wt_pub); 
 	~ExpResetMcl2();
 
 	void sensorUpdate(double lidar_x, double lidar_y, double lidar_t, bool inv);
@@ -54,11 +55,16 @@ class ExpResetMcl2 : public Mcl
 	bool should_gnss_reset_;
 	bool open_place_arrived_, pre_open_place_arrived_;
 	bool exec_reset_aft_wt_;
-	// double last_reset_gnss_pos_[2] = {INFINITY, INFINITY};
+	bool gnss_info_rel_is_low_ = true;
+	bool likelihood_watch_ = false;
+	std::chrono::system_clock::time_point likelihood_watch_timer_start_;
+
 	rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client_;
 	rclcpp_action::Client<WallTrackingAction>::SendGoalOptions send_goal_options_;
 	geometry_msgs::msg::PointStamped last_reset_gnss_pos_;
 	rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub_;
+	geometry_msgs::msg::PoseArray reset_pose_aft_wt_;
+	rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr reset_pose_aft_wt_pub_;
 
 	void goalResponseCallback(const GoalHandleWallTracking::SharedPtr & goal_handle);
     void feedbackCallback(
@@ -76,8 +82,10 @@ class ExpResetMcl2 : public Mcl
 	void expResetWithLLCalc(Scan & scan);
 	void gnssResetAndExpReset(Scan & scan);
 	void sendWTGoal();
-
+	void updateAndPubResetPoseAftWt();
+	void pubLastResetGnssPos();
 	GnssUtil gnss_utility_;
+	bool executeGnssReset();
 };
 
 }  // namespace emcl2
