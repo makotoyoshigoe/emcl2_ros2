@@ -4,6 +4,8 @@
 #include "emcl2/ExpResetMcl2.h"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2/utils.h>
 
 #include <stdlib.h>
 
@@ -258,6 +260,7 @@ void ExpResetMcl2::setGnssPose(const geometry_msgs::msg::PoseWithCovarianceStamp
 	gnss_utility_.gnss_position_ << msg->pose.pose.position.x, msg->pose.pose.position.y;
 	gnss_utility_.gnss_sigma_mx_ << msg->pose.covariance[0], 0., 
 								 0., msg->pose.covariance[7];
+    gnss_utility_.gnss_yaw_ = tf2::getYaw(msg->pose.pose.orientation);
 	// gnss_utility_.setVariance();
 }
 

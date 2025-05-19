@@ -18,8 +18,9 @@ class GnssUtil
     Eigen::Vector2d gnss_position_, pf_position_;
     Eigen::Matrix2d gnss_sigma_mx_, pf_sigma_mx_;
     double pf_x_var_, pf_y_var_;
+    double gnss_yaw_;
     double kld();
-	  void gnssReset(double alpha, double alpha_th, std::vector<emcl2::Particle> & particles);
+    void gnssReset(double alpha, double alpha_th, std::vector<emcl2::Particle> & particles);
     bool isNAN();
     double pfRanGaussian(double sigma);
     // double boxMuller(double sigma);
