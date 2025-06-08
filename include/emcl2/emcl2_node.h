@@ -46,7 +46,7 @@ class EMcl2Node : public rclcpp::Node
 
       private:
 	std::shared_ptr<ExpResetMcl2> pf_;
-	GnssUtil gnss_utility;
+	// std::shared_ptr<GnssUtil> gnss_utility;
 
 	rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr particlecloud_pub_;
 	rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub_;

@@ -27,8 +27,8 @@ class ExpResetMcl2 : public Mcl
 	  const std::shared_ptr<LikelihoodFieldMap> & map, double alpha_th,
 	  double expansion_radius_position, double expansion_radius_orientation,
 	  double extraction_rate, double successive_penetration_threshold, bool sensor_reset, 
-      const GnssUtil & gnss_utility, bool use_gnss_reset, bool use_wall_tracking, double gnss_reset_var, 
-	  double kld_th, double pf_var_th, 
+      const std::shared_ptr<GnssUtil> & gnss_utility, bool use_gnss_reset, bool use_wall_tracking, 
+	  double gnss_reset_var, double kld_th, double pf_var_th, 
 	  rclcpp_action::Client<WallTrackingAction>::SharedPtr wt_client, 
 	  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub);
 	~ExpResetMcl2();
@@ -77,7 +77,7 @@ class ExpResetMcl2 : public Mcl
 	void gnssResetAndExpReset(Scan & scan);
 	void sendWTGoal();
 
-	GnssUtil gnss_utility_;
+	std::shared_ptr<GnssUtil> gnss_utility_;
 };
 
 }  // namespace emcl2

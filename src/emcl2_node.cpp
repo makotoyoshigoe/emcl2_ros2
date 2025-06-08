@@ -72,7 +72,7 @@ void EMcl2Node::initCommunication(void)
 	this->get_parameter("base_frame_id", base_frame_id_);
 
 	this->declare_parameter("odom_freq", 20);
-	this->get_parameter("odom_freq", odom_freq_);;
+	this->get_parameter("odom_freq", odom_freq_);
     
     gnss_pose_with_covariance_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     	"gnss_pose_with_covariance", 2, std::bind(&EMcl2Node::cbGnssPoseWithCovariance, this, std::placeholders::_1));	
@@ -136,31 +136,35 @@ void EMcl2Node::initPF(void)
 	this->get_parameter("range_threshold", range_threshold);
 	this->get_parameter("sensor_reset", sensor_reset);
 
-	bool use_gnss_reset, use_wall_tracking;
-	double gnss_reset_var;
-	double kld_th, pf_var_th;
+	bool use_gnss_reset, use_wall_tracking, use_gnss_yaw;
+	double gnss_reset_var, kld_th, pf_var_th;
     this->declare_parameter("use_gnss_reset", false);
-	this->get_parameter("use_gnss_reset", use_gnss_reset);
     this->declare_parameter("use_wall_tracking", false);
-    this->get_parameter("use_wall_tracking", use_wall_tracking);
 	this->declare_parameter("gnss_reset_var", 2.0);
-    this->get_parameter("gnss_reset_var", gnss_reset_var);
 	this->declare_parameter("kld_th", 10.0);
-	this->get_parameter("kld_th", kld_th);
 	this->declare_parameter("pf_var_th", 0.25);
+	this->declare_parameter("use_gnss_yaw", true);
+
+	this->get_parameter("use_gnss_reset", use_gnss_reset);
+    this->get_parameter("use_wall_tracking", use_wall_tracking);
+    this->get_parameter("gnss_reset_var", gnss_reset_var);
+	this->get_parameter("kld_th", kld_th);
 	this->get_parameter("pf_var_th", pf_var_th);
+	this->get_parameter("use_gnss_yaw", use_gnss_yaw);
+
     rclcpp_action::Client<WallTrackingAction>::SharedPtr client_ptr;
     client_ptr = rclcpp_action::create_client<WallTrackingAction>(this, "wall_tracking");
 
 	rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub;
 	last_reset_gnss_pos_pub = create_publisher<geometry_msgs::msg::PointStamped>("last_reset_gnss_pos", 2);
-
-	pf_.reset(new ExpResetMcl2(
+	std::shared_ptr<GnssUtil> gnss_utility;
+    gnss_utility.reset(new GnssUtil(use_gnss_yaw));
+	
+    pf_.reset(new ExpResetMcl2(
 	  init_pose, num_particles, scan, om, map, alpha_th, ex_rad_pos, ex_rad_ori, 
 	  extraction_rate, range_threshold, sensor_reset, 
-	  gnss_utility, use_gnss_reset, use_wall_tracking, gnss_reset_var, kld_th, pf_var_th, 
-	  client_ptr, 
-	  last_reset_gnss_pos_pub));
+	  gnss_utility, use_gnss_reset, use_wall_tracking,  
+      gnss_reset_var, kld_th, pf_var_th, client_ptr, last_reset_gnss_pos_pub));
 
 	init_pf_ = true;
 }

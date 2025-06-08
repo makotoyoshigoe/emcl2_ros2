@@ -6,10 +6,10 @@
 #include "rclcpp/rclcpp.hpp"
 
 namespace emcl2{
-GnssUtil::GnssUtil()
+GnssUtil::GnssUtil(bool use_gnss_yaw): 
+use_gnss_yaw_(use_gnss_yaw)
 {
-  gnss_var_ = 5.0;
-  pf_var_ = 1.0;
+    // RCLCPP_INFO(rclcpp::get_logger("GNSS UTIL"), "use_gnss_yaw: %d", use_gnss_yaw);
 }
 
 double GnssUtil::pfRanGaussian(double sigma)
@@ -49,8 +49,9 @@ void GnssUtil::gnssReset(double alpha, double alpha_th, std::vector<emcl2::Parti
     {
         particles[i].p_.x_ = gnss_position_[0] + pfRanGaussian(gnss_sigma_mx_(0, 0));
         particles[i].p_.y_ = gnss_position_[1] + pfRanGaussian(gnss_sigma_mx_(1, 1));
-        // particles[i].p_.t_ = 2 * (static_cast<double>(rand()) / RAND_MAX - 0.5) * M_PI;
-        particles[i].p_.t_ = gnss_yaw_ + pfRanGaussian(M_PI / 2);
+        // if(use_gnss_yaw_) particles[i].p_.t_ = gnss_yaw_ + pfRanGaussian(M_PI / 2);
+        if(use_gnss_yaw_) particles[i].p_.t_ = gnss_yaw_;
+        else particles[i].p_.t_ = 2 * (static_cast<double>(rand()) / RAND_MAX - 0.5) * M_PI;
     }
 }
 

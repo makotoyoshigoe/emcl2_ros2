@@ -13,7 +13,7 @@ namespace emcl2
 class GnssUtil
 {
       public:
-    GnssUtil();
+    GnssUtil(bool use_gnss_yaw);
     ~GnssUtil(){};
     Eigen::Vector2d gnss_position_, pf_position_;
     Eigen::Matrix2d gnss_sigma_mx_, pf_sigma_mx_;
@@ -29,6 +29,7 @@ class GnssUtil
       private:
     double gnss_var_, pf_var_;
     double gnss_reset_var_;
+    bool use_gnss_yaw_;
 };
 }
 
