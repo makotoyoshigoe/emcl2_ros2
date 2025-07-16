@@ -72,10 +72,7 @@ void EMcl2Node::initCommunication(void)
 	this->get_parameter("base_frame_id", base_frame_id_);
 
 	this->declare_parameter("odom_freq", 20);
-	this->get_parameter("odom_freq", odom_freq_);
-    
-    gnss_pose_with_covariance_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    	"gnss_pose_with_covariance", 2, std::bind(&EMcl2Node::cbGnssPoseWithCovariance, this, std::placeholders::_1));	
+	this->get_parameter("odom_freq", odom_freq_);   	
 }
 
 void EMcl2Node::initTF(void)
@@ -153,12 +150,15 @@ void EMcl2Node::initPF(void)
 	this->get_parameter("use_gnss_yaw", use_gnss_yaw);
 
     rclcpp_action::Client<WallTrackingAction>::SharedPtr client_ptr;
-    client_ptr = rclcpp_action::create_client<WallTrackingAction>(this, "wall_tracking");
-
 	rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub;
-	last_reset_gnss_pos_pub = create_publisher<geometry_msgs::msg::PointStamped>("last_reset_gnss_pos", 2);
-	std::shared_ptr<GnssUtil> gnss_utility;
+	rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr reset_pose_aft_wt_pub;
+    std::shared_ptr<GnssUtil> gnss_utility;
     gnss_utility.reset(new GnssUtil(use_gnss_yaw));
+	if(use_wall_tracking){
+        client_ptr = rclcpp_action::create_client<WallTrackingAction>(this, "wall_tracking");
+		last_reset_gnss_pos_pub = create_publisher<geometry_msgs::msg::PointStamped>("last_reset_gnss_pos", 2);
+		reset_pose_aft_wt_pub = create_publisher<geometry_msgs::msg::PoseArray>("reset_pose_aft_wt", 2);
+	}
 	
     pf_.reset(new ExpResetMcl2(
 	  init_pose, num_particles, scan, om, map, alpha_th, ex_rad_pos, ex_rad_ori, 
@@ -167,6 +167,18 @@ void EMcl2Node::initPF(void)
       gnss_reset_var, kld_th, pf_var_th, client_ptr, last_reset_gnss_pos_pub));
 
 	init_pf_ = true;
+	
+	if(this->get_parameter("use_gnss_reset").as_bool()){
+		gnss_pose_with_covariance_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+			"gnss_pose_with_covariance", 2, 
+			std::bind(&EMcl2Node::cbGnssPoseWithCovariance, 
+				this, std::placeholders::_1));	
+	}
+
+	
+	//if(!use_gnss_reset){
+	//	gnss_pose_with_covariance_sub_->clear();
+	//}
 }
 
 std::shared_ptr<OdomModel> EMcl2Node::initOdometry(void)

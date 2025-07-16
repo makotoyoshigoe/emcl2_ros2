@@ -12,7 +12,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/time.hpp>
 
-#include <geometry_msgs/msg/pose_array.hpp>
+ // #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
 #include <sensor_msgs/msg/laser_scan.hpp>
@@ -46,7 +46,6 @@ class EMcl2Node : public rclcpp::Node
 
       private:
 	std::shared_ptr<ExpResetMcl2> pf_;
-	// std::shared_ptr<GnssUtil> gnss_utility;
 
 	rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr particlecloud_pub_;
 	rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub_;
