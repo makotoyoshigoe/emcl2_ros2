@@ -137,17 +137,23 @@ void EMcl2Node::initPF(void)
 	double gnss_reset_var, kld_th, pf_var_th;
     this->declare_parameter("use_gnss_reset", false);
     this->declare_parameter("use_wall_tracking", false);
+	this->declare_parameter("use_gnss_yaw", false);
 	this->declare_parameter("gnss_reset_var", 2.0);
 	this->declare_parameter("kld_th", 10.0);
 	this->declare_parameter("pf_var_th", 0.25);
-	this->declare_parameter("use_gnss_yaw", true);
 
 	this->get_parameter("use_gnss_reset", use_gnss_reset);
-    this->get_parameter("use_wall_tracking", use_wall_tracking);
+	// If use_gnss_reset is false, use_gnss_yaw and use_wall_tracking parameters are false.
+	if(use_gnss_reset){
+		this->get_parameter("use_gnss_yaw", use_gnss_yaw);
+    	this->get_parameter("use_wall_tracking", use_wall_tracking);
+	}else{
+		use_gnss_yaw = false;
+		use_wall_tracking = false;
+	}
     this->get_parameter("gnss_reset_var", gnss_reset_var);
 	this->get_parameter("kld_th", kld_th);
 	this->get_parameter("pf_var_th", pf_var_th);
-	this->get_parameter("use_gnss_yaw", use_gnss_yaw);
 
     rclcpp_action::Client<WallTrackingAction>::SharedPtr client_ptr;
 	rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr last_reset_gnss_pos_pub;
