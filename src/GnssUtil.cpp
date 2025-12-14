@@ -65,7 +65,7 @@ void GnssUtil::gnssReset(double alpha, double alpha_th, std::vector<emcl2::Parti
         particles[i].p_.x_ = gnss_position_[0] + pfRanGaussian(gnss_var_);
         particles[i].p_.y_ = gnss_position_[1] + pfRanGaussian(gnss_var_);
         if(use_gnss_yaw_) particles[i].p_.t_ = gnss_yaw_;
-        // particles[i].p_.t_ = 2 * (static_cast<double>(rand()) / RAND_MAX - 0.5) * M_PI;
+        else particles[i].p_.t_ = 2 * (static_cast<double>(rand()) / RAND_MAX - 0.5) * M_PI;
     }
 }
 

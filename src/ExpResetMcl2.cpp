@@ -71,12 +71,12 @@ void ExpResetMcl2::feedbackCallback(
 	// RCLCPP_INFO(rclcpp::get_logger("emcl2"), "open place arrived: %d", open_place_arrived_);
 	if(!pre_open_place_arrived_ && open_place_arrived_) should_gnss_reset_ = true;
 	if(alpha_ >= alpha_threshold_ && open_place_arrived_ && exec_reset_aft_wt_){
-		RCLCPP_INFO(rclcpp::get_logger("emcl2"), "Send cancel goal to server");
 		wt_client_->async_cancel_all_goals();
+		RCLCPP_INFO(rclcpp::get_logger("emcl2"), "Send cancel goal to server");
 		likelihood_watch_ = true;
 		likelihood_watch_timer_start_ = std::chrono::system_clock::now();
-		updateAndPubResetPoseAftWt();
-		pubLastResetGnssPos();
+		// updateAndPubResetPoseAftWt();
+		// pubLastResetGnssPos();
 		wall_tracking_start_ = false;
 		exec_reset_aft_wt_ = false;
 	}
@@ -236,16 +236,16 @@ void ExpResetMcl2::resetUseWallTracking(Scan & scan)
 
 bool ExpResetMcl2::executeGnssReset()
 {
-		double kld = gnss_utility_->kld();
-		RCLCPP_INFO(rclcpp::get_logger("emcl2_node"), 
-				"kld / kld_th: %lf / %lf, (x_var, y_var) / var_th: (%lf, %lf) / %lf", 
-				kld, kld_th_, gnss_utility_->pf_sigma_mx_(0, 0), gnss_utility_->pf_sigma_mx_(1, 1), pf_var_th_);
-		bool kld_cond = kld < kld_th_;
-		bool var_x_cond = gnss_utility_->pf_sigma_mx_(0, 0) < pf_var_th_;
-		bool var_y_cond = gnss_utility_->pf_sigma_mx_(1, 1) < pf_var_th_;
-		bool var_cond = var_x_cond && var_y_cond;
-		bool gr_cond = !kld_cond && !var_cond;
-		return gr_cond;
+    double kld = gnss_utility_->kld();
+    RCLCPP_INFO(rclcpp::get_logger("emcl2_node"), 
+            "kld / kld_th: %lf / %lf, (x_var, y_var) / var_th: (%lf, %lf) / %lf", 
+            kld, kld_th_, gnss_utility_->pf_sigma_mx_(0, 0), gnss_utility_->pf_sigma_mx_(1, 1), pf_var_th_);
+    bool kld_cond = kld < kld_th_;
+    bool var_x_cond = gnss_utility_->pf_sigma_mx_(0, 0) < pf_var_th_;
+    bool var_y_cond = gnss_utility_->pf_sigma_mx_(1, 1) < pf_var_th_;
+    bool var_cond = var_x_cond && var_y_cond;
+    bool gr_cond = !kld_cond && !var_cond;
+    return gr_cond;
 }
 
 void ExpResetMcl2::sendWTGoal()
@@ -255,7 +255,7 @@ void ExpResetMcl2::sendWTGoal()
 		rclcpp::shutdown();
 	}
 	auto goal_msg = WallTrackingAction::Goal();
-	goal_msg.start = true;
+	goal_msg.debug = false;
 	wt_client_->async_send_goal(goal_msg, send_goal_options_);
 	RCLCPP_INFO(rclcpp::get_logger("emcl2"), "Send goal to server");
 	wall_tracking_start_ = true;
